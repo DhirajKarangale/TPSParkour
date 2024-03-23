@@ -3,18 +3,13 @@ using UnityEngine.Video;
 
 public class PlayerMovement : MonoBehaviour
 {
-    // Look
-    private Quaternion playerTargetRot;
-    private Quaternion camTargetRot;
-    private Vector2 lookInput;
-    [SerializeField] float sensitivity;
-
     [SerializeField] Player player;
     [SerializeField] LayerMask groundLayerMask;
     [SerializeField] float groundCheckDistance;
-    [SerializeField] internal float forwardSpeed;
-    [SerializeField] internal float otherSpeed;
+    [SerializeField] float forwardSpeed;
+    [SerializeField] float otherSpeed;
     [SerializeField] float jumpForce;
+    [SerializeField] float sensitivity;
     [SerializeField] AnimationCurve slopeCurveModifier;
 
     private RaycastHit hit;
@@ -31,9 +26,6 @@ public class PlayerMovement : MonoBehaviour
     {
         currSpeed = forwardSpeed;
         animator = player.animator;
-
-        playerTargetRot = transform.localRotation;
-        camTargetRot = player.cam.transform.localRotation;
     }
 
     private void Update()
@@ -104,19 +96,11 @@ public class PlayerMovement : MonoBehaviour
     {
         if (moveInput.y > 0)
         {
-            Vector3 cameraForward = player.cam.transform.forward;
-            cameraForward.y = 0f;
+            Vector3 camDir = player.cam.transform.forward;
+            camDir.y = 0f;
 
-            Quaternion newRotation = Quaternion.LookRotation(cameraForward);
-            transform.rotation = Quaternion.Slerp(transform.rotation, newRotation, sensitivity * Time.deltaTime);
-
-            // playerTargetRot *= Quaternion.Euler(0f, lookInput.x, 0f);
-            // camTargetRot *= Quaternion.Euler(-lookInput.y, 0f, 0f);
-            // camTargetRot *= Quaternion.Euler(-lookInput.y, lookInput.x, 0f);
-            // camTargetRot = ClampRotationAroundXAxis(camTargetRot);
-
-            // transform.localRotation = Quaternion.Slerp(transform.localRotation, playerTargetRot, 5 * Time.deltaTime);
-            // // player.cam.transform.localRotation = Quaternion.Slerp(player.cam.transform.localRotation, camTargetRot, 5 * Time.deltaTime);
+            Quaternion rot = Quaternion.LookRotation(camDir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, rot, sensitivity * Time.deltaTime);
 
             float oldYRotation = transform.eulerAngles.y;
             if (isGrounded)
@@ -199,9 +183,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void GetInput()
     {
-        lookInput.x = Input.GetAxis("Mouse X") * sensitivity;
-        lookInput.y = Input.GetAxis("Mouse Y") * sensitivity;
-
         moveInput.x = Input.GetAxisRaw("Horizontal");
         moveInput.y = Input.GetAxisRaw("Vertical");
 
