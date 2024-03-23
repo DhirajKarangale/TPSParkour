@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Video;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -18,6 +19,9 @@ public class PlayerMovement : MonoBehaviour
     private float currSpeed;
     private bool isJump, isPreviouslyGrounded;
     private bool isJumping, isGrounded;
+
+    public float rotateTime = 0.1f;
+    private float rotateVel;
 
 
     private void Start()
@@ -44,12 +48,21 @@ public class PlayerMovement : MonoBehaviour
         {
             UpdateSpeed();
 
+            // float targetAngle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg;
+            float targetAngle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y;
+            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref rotateVel, rotateTime);
+            transform.rotation = Quaternion.Euler(0, angle, 0);
+
             Vector3 desiredMove = transform.forward * moveInput.y + player.cam.transform.right * moveInput.x;
             desiredMove = Vector3.ProjectOnPlane(desiredMove, groundDir).normalized;
 
             desiredMove.x = desiredMove.x * currSpeed;
             desiredMove.z = desiredMove.z * currSpeed;
             desiredMove.y = desiredMove.y * currSpeed;
+
+            if (moveInput.y < 0) desiredMove.z = -desiredMove.z;
+
+            // Vector3 moveDir = (Quaternion.Euler(0, targetAngle, 0) * Vector3.forward).normalized;
 
             if (player.rigidBody.velocity.sqrMagnitude < (currSpeed * currSpeed))
             {
@@ -60,20 +73,21 @@ public class PlayerMovement : MonoBehaviour
 
     private void UpdateSpeed()
     {
-        if (moveInput.x != 0 || moveInput.y < 0) currSpeed = otherSpeed;
-        else if(moveInput.y > 0) currSpeed = forwardSpeed;
-        // else if(moveInput.y < 0) currSpeed = otherSpeed;
+        // if (moveInput.x != 0 || moveInput.y < 0) currSpeed = otherSpeed;
+        // else if (moveInput.y > 0) currSpeed = forwardSpeed;
+
+        currSpeed = Input.GetKey(KeyCode.LeftShift) ? forwardSpeed : otherSpeed;
     }
 
     private void Anim()
     {
         player.animator.SetBool("isJump", !isGrounded && isJumping);
 
-        if (!isJumping)
-        {
-            player.animator.SetFloat("horizontal", moveInput.y);
-            player.animator.SetFloat("vertical", moveInput.x);
-        }
+        if (!isJumping) player.animator.SetFloat("speed", moveInput.normalized.magnitude * currSpeed / forwardSpeed);
+        // {
+        //     player.animator.SetFloat("horizontal", moveInput.y);
+        //     player.animator.SetFloat("vertical", moveInput.x);
+        // }
     }
 
 
