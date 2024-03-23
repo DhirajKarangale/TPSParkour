@@ -32,9 +32,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        Move();
         Anim();
         GetInput();
+        UpdatePos();
         GroundCheck();
         AddGroundForce();
     }
@@ -42,52 +42,51 @@ public class PlayerMovement : MonoBehaviour
 
     #region Move
 
-    private void Move()
+    private void UpdatePos()
     {
         if (Mathf.Abs(moveInput.magnitude) > 0.1f && isGrounded)
         {
             UpdateSpeed();
-
-            // float targetAngle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg;
-            float targetAngle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y;
-            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref rotateVel, rotateTime);
-            transform.rotation = Quaternion.Euler(0, angle, 0);
-
-            Vector3 desiredMove = transform.forward * moveInput.y + player.cam.transform.right * moveInput.x;
-            desiredMove = Vector3.ProjectOnPlane(desiredMove, groundDir).normalized;
-
-            desiredMove.x = desiredMove.x * currSpeed;
-            desiredMove.z = desiredMove.z * currSpeed;
-            desiredMove.y = desiredMove.y * currSpeed;
-
-            if (moveInput.y < 0) desiredMove.z = -desiredMove.z;
-
-            // Vector3 moveDir = (Quaternion.Euler(0, targetAngle, 0) * Vector3.forward).normalized;
-
-            if (player.rigidBody.velocity.sqrMagnitude < (currSpeed * currSpeed))
-            {
-                player.rigidBody.AddForce(desiredMove * Time.deltaTime * slopeCurveModifier.Evaluate(Vector3.Angle(groundDir, Vector3.up)), ForceMode.Impulse);
-            }
+            Rotate();
+            Move();
         }
+    }
+
+    private void Move()
+    {
+        Vector3 desiredMove = transform.forward * moveInput.y + player.cam.transform.right * moveInput.x;
+        desiredMove = Vector3.ProjectOnPlane(desiredMove, groundDir).normalized;
+
+        desiredMove.x = desiredMove.x * currSpeed;
+        desiredMove.z = desiredMove.z * currSpeed;
+        desiredMove.y = desiredMove.y * currSpeed;
+
+        if (moveInput.y < 0) desiredMove.z = -desiredMove.z;
+
+        if (player.rigidBody.velocity.sqrMagnitude < (currSpeed * currSpeed))
+        {
+            player.rigidBody.AddForce(desiredMove * Time.deltaTime * slopeCurveModifier.Evaluate(Vector3.Angle(groundDir, Vector3.up)), ForceMode.Impulse);
+        }
+    }
+
+    private void Rotate()
+    {
+        float targetAngle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg;
+        float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref rotateVel, rotateTime);
+
+        transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(0, targetAngle, 0), 5 * Time.deltaTime);
+        // transform.rotation = Quaternion.Euler(0, angle, 0);
     }
 
     private void UpdateSpeed()
     {
-        // if (moveInput.x != 0 || moveInput.y < 0) currSpeed = otherSpeed;
-        // else if (moveInput.y > 0) currSpeed = forwardSpeed;
-
         currSpeed = Input.GetKey(KeyCode.LeftShift) ? forwardSpeed : otherSpeed;
     }
 
     private void Anim()
     {
         player.animator.SetBool("isJump", !isGrounded && isJumping);
-
         if (!isJumping) player.animator.SetFloat("speed", moveInput.normalized.magnitude * currSpeed / forwardSpeed);
-        // {
-        //     player.animator.SetFloat("horizontal", moveInput.y);
-        //     player.animator.SetFloat("vertical", moveInput.x);
-        // }
     }
 
 

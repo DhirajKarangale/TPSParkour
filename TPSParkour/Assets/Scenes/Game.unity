@@ -5669,7 +5669,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8079559056467309991}
-  m_LocalRotation: {x: 0.12664486, y: -0.06462699, z: 0.015214126, w: 0.98972374}
+  m_LocalRotation: {x: 0.12664486, y: -0.06462695, z: 0.015214116, w: 0.98972374}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -6048,7 +6048,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8079559057263564545}
-  m_LocalRotation: {x: 0.16251294, y: -0.06403168, z: 0.017551655, w: 0.9844701}
+  m_LocalRotation: {x: 0.16251294, y: -0.064031646, z: 0.017551646, w: 0.9844701}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -6798,9 +6798,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   groundCheckDistance: 0.3
-  forwardSpeed: 2600
-  otherSpeed: 1100
-  jumpForce: 470
+  forwardSpeed: 3000
+  otherSpeed: 1500
+  jumpForce: 550
   slopeCurveModifier:
     serializedVersion: 2
     m_Curve:
