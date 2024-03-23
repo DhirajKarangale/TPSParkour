@@ -3,6 +3,12 @@ using UnityEngine.Video;
 
 public class PlayerMovement : MonoBehaviour
 {
+    // Look
+    private Quaternion playerTargetRot;
+    private Quaternion camTargetRot;
+    private Vector2 lookInput;
+    [SerializeField] float sensitivity;
+
     [SerializeField] Player player;
     [SerializeField] LayerMask groundLayerMask;
     [SerializeField] float groundCheckDistance;
@@ -20,14 +26,14 @@ public class PlayerMovement : MonoBehaviour
     private bool isJump, isPreviouslyGrounded;
     private bool isJumping, isGrounded;
 
-    public float rotateTime = 0.1f;
-    private float rotateVel;
-
 
     private void Start()
     {
         currSpeed = forwardSpeed;
         animator = player.animator;
+
+        playerTargetRot = transform.localRotation;
+        camTargetRot = player.cam.transform.localRotation;
     }
 
     private void Update()
@@ -35,6 +41,7 @@ public class PlayerMovement : MonoBehaviour
         Anim();
         GetInput();
         UpdatePos();
+        LookRotation();
         GroundCheck();
         AddGroundForce();
     }
@@ -54,13 +61,16 @@ public class PlayerMovement : MonoBehaviour
 
     private void Move()
     {
+        Vector3 moveDir = new Vector3(0, Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y, 0);
+
         Vector3 desiredMove = transform.forward * moveInput.y + player.cam.transform.right * moveInput.x;
+        if (moveInput.y > 0) desiredMove = player.cam.transform.forward * moveInput.y;
+
         desiredMove = Vector3.ProjectOnPlane(desiredMove, groundDir).normalized;
 
         desiredMove.x = desiredMove.x * currSpeed;
         desiredMove.z = desiredMove.z * currSpeed;
         desiredMove.y = desiredMove.y * currSpeed;
-
         if (moveInput.y < 0) desiredMove.z = -desiredMove.z;
 
         if (player.rigidBody.velocity.sqrMagnitude < (currSpeed * currSpeed))
@@ -71,11 +81,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void Rotate()
     {
-        float targetAngle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg;
-        float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref rotateVel, rotateTime);
-
-        transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(0, targetAngle, 0), 5 * Time.deltaTime);
-        // transform.rotation = Quaternion.Euler(0, angle, 0);
+        Quaternion targetAngle = Quaternion.Euler(0, Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg, 0);
+        transform.localRotation = Quaternion.Slerp(transform.localRotation, targetAngle, 5 * Time.deltaTime);
     }
 
     private void UpdateSpeed()
@@ -91,6 +98,51 @@ public class PlayerMovement : MonoBehaviour
 
 
     #endregion
+
+
+    private void LookRotation()
+    {
+        if (moveInput.y > 0)
+        {
+            Vector3 cameraForward = player.cam.transform.forward;
+            cameraForward.y = 0f;
+
+            Quaternion newRotation = Quaternion.LookRotation(cameraForward);
+            transform.rotation = Quaternion.Slerp(transform.rotation, newRotation, sensitivity * Time.deltaTime);
+
+            // playerTargetRot *= Quaternion.Euler(0f, lookInput.x, 0f);
+            // camTargetRot *= Quaternion.Euler(-lookInput.y, 0f, 0f);
+            // camTargetRot *= Quaternion.Euler(-lookInput.y, lookInput.x, 0f);
+            // camTargetRot = ClampRotationAroundXAxis(camTargetRot);
+
+            // transform.localRotation = Quaternion.Slerp(transform.localRotation, playerTargetRot, 5 * Time.deltaTime);
+            // // player.cam.transform.localRotation = Quaternion.Slerp(player.cam.transform.localRotation, camTargetRot, 5 * Time.deltaTime);
+
+            float oldYRotation = transform.eulerAngles.y;
+            if (isGrounded)
+            {
+                Quaternion velRotation = Quaternion.AngleAxis(transform.eulerAngles.y - oldYRotation, Vector3.up);
+                player.rigidBody.velocity = velRotation * player.rigidBody.velocity;
+            }
+        }
+    }
+
+    private Quaternion ClampRotationAroundXAxis(Quaternion q)
+    {
+        q.x /= q.w;
+        q.y /= q.w;
+        q.z /= q.w;
+        q.w = 1.0f;
+
+        float angleX = 2.0f * Mathf.Rad2Deg * Mathf.Atan(q.x);
+
+        angleX = Mathf.Clamp(angleX, -45, 15);
+
+        q.x = Mathf.Tan(0.5f * Mathf.Deg2Rad * angleX);
+
+        return q;
+    }
+
 
 
     #region Ground
@@ -147,6 +199,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void GetInput()
     {
+        lookInput.x = Input.GetAxis("Mouse X") * sensitivity;
+        lookInput.y = Input.GetAxis("Mouse Y") * sensitivity;
+
         moveInput.x = Input.GetAxisRaw("Horizontal");
         moveInput.y = Input.GetAxisRaw("Vertical");
 
