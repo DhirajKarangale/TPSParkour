@@ -9,7 +9,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float forwardSpeed;
     [SerializeField] float otherSpeed;
     [SerializeField] float jumpForce;
-    [SerializeField] float sensitivity;
+    [SerializeField] internal float sensitivity;
     [SerializeField] AnimationCurve slopeCurveModifier;
 
     private RaycastHit hit;
@@ -20,6 +20,7 @@ public class PlayerMovement : MonoBehaviour
     private float currSpeed;
     private bool isJump, isPreviouslyGrounded;
     private bool isJumping, isGrounded;
+    internal bool isBlock;
 
 
     private void Start()
@@ -30,6 +31,12 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if (isBlock)
+        {
+            // player.rigidBody.isKinematic = true;
+            return;
+        }
+
         Anim();
         GetInput();
         UpdatePos();
@@ -186,7 +193,7 @@ public class PlayerMovement : MonoBehaviour
         moveInput.x = Input.GetAxisRaw("Horizontal");
         moveInput.y = Input.GetAxisRaw("Vertical");
 
-        if (Input.GetButtonDown("Jump") && !isJump) isJump = true;
+        if (Input.GetButtonDown("Jump") && !isJump && !player.isAction) isJump = true;
     }
 
     #endregion
