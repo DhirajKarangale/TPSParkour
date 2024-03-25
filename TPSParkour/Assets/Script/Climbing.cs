@@ -84,8 +84,8 @@ public class Climbing : MonoBehaviour
     {
         if (isClimbAllow && player.playerMovement.isJumping)
         {
-            // if (Physics.SphereCast(transform.position + new Vector3(0, 1.5f, 0), radius, transform.forward, out RaycastHit hit, 2f, layerMask)) Climb(hit.transform);
-            if (Physics.Raycast(transform.position + new Vector3(0, 1.5f, 0), transform.forward, out RaycastHit hit, 2f, layerMask)) Climb(hit.transform);
+            if (Physics.SphereCast(transform.position + new Vector3(0, 1.5f, 0), radius, transform.forward, out RaycastHit hit, 2f, layerMask)) Climb(hit.transform);
+            // if (Physics.Raycast(transform.position + new Vector3(0, 1.5f, 0), transform.forward, out RaycastHit hit, 2f, layerMask)) Climb(hit.transform);
         }
     }
 
@@ -105,10 +105,10 @@ public class Climbing : MonoBehaviour
         StartCoroutine(IEHang(hangPos));
 
         Vector3 directionToLedge = (ledge.position - transform.position).normalized;
-        directionToLedge.y = 0;
+        // directionToLedge.y = 0;
+        // Quaternion targetRotation = Quaternion.LookRotation(directionToLedge, Vector3.up);
         float angle = Mathf.Atan2(directionToLedge.x, directionToLedge.z) * Mathf.Rad2Deg;
-        Quaternion targetRotation = Quaternion.LookRotation(directionToLedge, Vector3.up);
-        // Quaternion targetRotation = Quaternion.Euler(0, angle, 0);
+        Quaternion targetRotation = Quaternion.Euler(0, angle, 0);
         transform.rotation = targetRotation;
 
         isHanged = true;
@@ -135,12 +135,21 @@ public class Climbing : MonoBehaviour
                 origin += new Vector3(player.playerMovement.moveInput.normalized.x * 0.5f, 1.5f, 0);
             }
 
-            Debug.DrawRay(origin, transform.forward, Color.red);
-            // if (Physics.SphereCast(origin, 1, transform.forward, out RaycastHit hit, 3, layerMask))
             if (Physics.Raycast(origin, transform.forward, out RaycastHit hit, 0.5f, layerMask))
             {
                 player.rigidBody.MovePosition(movePos);
             }
+
+
+            if (Physics.SphereCast(origin, 10, transform.right, out RaycastHit otherPoint, 20, layerMask))
+            {
+                Debug.Log("Detect");
+                if (otherPoint.transform != climbPoint)
+                {
+                    Debug.Log("New Point Detected");
+                }
+            }
+
         }
         else if (player.playerMovement.moveInput.y < 0) Fall(false);
         else if (player.playerMovement.moveInput.y > 0 || Input.GetButtonDown("Jump")) Fall(true);
