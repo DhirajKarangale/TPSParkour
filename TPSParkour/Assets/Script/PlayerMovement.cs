@@ -31,11 +31,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        if (isBlock)
-        {
-            // player.rigidBody.isKinematic = true;
-            return;
-        }
+        if (isBlock) return;
 
         Anim();
         GetInput();
@@ -60,12 +56,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void Move()
     {
-        // Vector3 desiredMove = transform.forward * moveInput.y + player.cam.transform.right * moveInput.x;
-        // desiredMove = Vector3.ProjectOnPlane(desiredMove, groundDir).normalized;
-
-        // if (moveInput.y > 0) desiredMove = player.cam.transform.forward * moveInput.y;
-        // if (moveInput.y < 0) desiredMove.z = -desiredMove.z;
-
         float targetAngle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y;
         Vector3 desiredMove = Quaternion.Euler(0, targetAngle, 0) * Vector3.forward;
 
@@ -77,7 +67,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void Rotate()
     {
-        // Quaternion targetAngle = Quaternion.Euler(0, Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg, 0);
         float angle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y;
         Quaternion targetAngle = Quaternion.Euler(0, angle, 0);
         transform.localRotation = Quaternion.Slerp(transform.localRotation, targetAngle, 5 * Time.deltaTime);

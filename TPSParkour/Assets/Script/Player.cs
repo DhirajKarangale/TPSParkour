@@ -17,8 +17,8 @@ public class Player : MonoBehaviour
 
     internal void BlockMovement(bool isActive)
     {
-        // playerMovement.enabled = isActive;
-        playerMovement.isBlock = true;
+        rigidBody.isKinematic = isActive;
+        playerMovement.isBlock = isActive;
     }
 
 

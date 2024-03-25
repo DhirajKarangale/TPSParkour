@@ -6,6 +6,7 @@ using UnityEngine.Video;
 public class Climbing : MonoBehaviour
 {
     [SerializeField] Player player;
+    [SerializeField] float duration;
 
     [Header("Climbing")]
     [SerializeField] bool isTargetMatching;
@@ -32,11 +33,12 @@ public class Climbing : MonoBehaviour
         {
             if (Input.GetButtonDown("Jump") && !player.isAction)
             {
-                if (Check(transform.forward, out RaycastHit hit))
+                if (Check(out RaycastHit hit))
                 {
                     Debug.Log("Climb Point found");
                     player.BlockMovement(true);
-                    StartCoroutine(ClimbToLedge("IdleToHang", hit.transform, 0.40f, 53f));
+                    // StartCoroutine(ClimbToLedge("IdleToHang", hit.transform, 0.40f, 53f));
+                    ClimbToLedge(hit.transform);
                 }
             }
         }
@@ -46,21 +48,43 @@ public class Climbing : MonoBehaviour
         }
     }
 
-
-    private IEnumerator ClimbToLedge(string anim, Transform ledgePoint, float stTime, float enTime)
+    private IEnumerator IEMove(Vector3 pos)
     {
-        DataTarget dataTarget = new DataTarget()
+        float time = 0;
+
+        while (time < duration)
         {
-            position = ledgePoint.position,
-            bodyParts = AvatarTarget.RightHand,
-            positionWt = Vector3.one,
-            stTime = stTime,
-            enTime = enTime
-        };
+            transform.position = Vector3.Lerp(transform.position, pos, Time.deltaTime * time / duration);
+            time += Time.deltaTime;
+            yield return null;
+        }
 
-        Quaternion rotation = Quaternion.LookRotation(-ledgePoint.forward);
+        transform.position = pos;
+    }
 
-        yield return player.PerformAction(dataTarget, anim, rotation, 0, true);
+
+    private void ClimbToLedge(Transform ledgePoint)
+    {
+        // DataTarget dataTarget = new DataTarget()
+        // {
+        //     position = ledgePoint.position,
+        //     bodyParts = AvatarTarget.RightHand,
+        //     positionWt = Vector3.one,
+        //     stTime = stTime,
+        //     enTime = enTime
+        // };
+
+        // Quaternion rotation = Quaternion.LookRotation(-ledgePoint.forward);
+
+        // yield return player.PerformAction(dataTarget, anim, rotation, 0, true);
+
+        // float angle = Mathf.Atan2(ledgePoint.position.x, ledgePoint.position.z) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y;
+        // transform.position = ledgePoint.position - new Vector3(0, 1.5f, ledgePoint.localScale.z / 2);
+
+        float angle = Mathf.Atan2(ledgePoint.position.x, ledgePoint.position.z) * Mathf.Rad2Deg;
+        StartCoroutine(IEMove(ledgePoint.position - new Vector3(0, 1.5f, ledgePoint.localScale.z / 2)));
+        transform.rotation = Quaternion.Euler(0, angle, 0);
+        player.animator.Play("IdleToHang");
 
         player.isHanging = true;
     }
@@ -90,25 +114,27 @@ public class Climbing : MonoBehaviour
     }
 
 
-    private bool Check(Vector3 dir, out RaycastHit hit)
+    private bool Check(out RaycastHit hit)
     {
+        // hit = new RaycastHit();
+
+        // Vector3 climbOrigin = transform.position + Vector3.up * 2f;
+        // Vector3 offset = new Vector3(0, 0f, 0);
+        // // Vector3 offset = new Vector3(0, 0.19f, 0);
+
+        // for (int i = 0; i < raysCnt; i++)
+        // {
+        //     Debug.DrawRay(climbOrigin + offset * i, transform.forward, Color.red);
+        //     if (Physics.Raycast(climbOrigin + offset * i, transform.forward, out RaycastHit raycast, rayLen, layerMask))
+        //     {
+        //         hit = raycast;
+        //         return true;
+        //     }
+        // }
+
+        // return false;
+
         hit = new RaycastHit();
-
-        if (dir == Vector3.zero) return false;
-
-        Vector3 climbOrigin = transform.position + Vector3.up * 1.5f;
-        Vector3 offset = new Vector3(0, 0.19f, 0);
-
-        for (int i = 0; i < raysCnt; i++)
-        {
-            Debug.DrawRay(climbOrigin + offset * i, dir, Color.red);
-            if (Physics.Raycast(climbOrigin + offset * i, dir, out RaycastHit raycast, rayLen, layerMask))
-            {
-                hit = raycast;
-                return true;
-            }
-        }
-
-        return false;
+        return Physics.SphereCast(transform.position, rayLen, Vector3.up, out hit, layerMask);
     }
 }
