@@ -13,11 +13,12 @@ public class Climbing : MonoBehaviour
     [SerializeField] float speedClimb;
 
     private bool isHanged;
-    private bool isClimbAllow;
+    private bool isClimbAllow, isChangeAllow;
     private Transform climbPoint;
 
     private void Start()
     {
+        isChangeAllow = true;
         isClimbAllow = true;
         isHanged = false;
     }
@@ -54,6 +55,16 @@ public class Climbing : MonoBehaviour
     }
 
 
+    private void AllowClimb()
+    {
+        isClimbAllow = true;
+    }
+
+    private void AllowChange()
+    {
+        isChangeAllow = true;
+    }
+
     private void Anim()
     {
         if (!isHanged) return;
@@ -62,9 +73,30 @@ public class Climbing : MonoBehaviour
         player.animator.SetFloat("climbHorrizontal", player.playerMovement.moveInput.x);
     }
 
-    private void AllowClimb()
+    private void PositionPlayer(Transform ledge)
     {
-        isClimbAllow = true;
+        float xPos = transform.position.x;
+        float zPos = ledge.position.z - ledge.localScale.z / 2;
+
+        if (ledge.rotation.y != 0)
+        {
+            xPos = ledge.position.x + ledge.localScale.z / 2;
+            zPos = transform.position.z + ledge.localScale.x * 0.2f;
+        }
+        Vector3 hangPos = new(xPos, ledge.position.y - 1.5f, zPos);
+        StartCoroutine(IEHang(hangPos));
+    }
+
+    private void RotatePlayer(Transform ledge)
+    {
+        // Vector3 directionToLedge = (ledge.position - transform.position).normalized;
+        // float angle = Mathf.Atan2(directionToLedge.x, directionToLedge.z) * Mathf.Rad2Deg;
+        // Quaternion targetRotation = Quaternion.Euler(0, angle, 0);
+
+        Quaternion targetRotation = ledge.rotation;
+        if (ledge.rotation.y != 0) targetRotation = Quaternion.Euler(0, -90, 0);
+
+        transform.rotation = targetRotation;
     }
 
     private void Fall(bool isJump)
@@ -93,28 +125,13 @@ public class Climbing : MonoBehaviour
     {
         climbPoint = ledge;
         player.BlockMovement(true);
-
-        float xPos = transform.position.x;
-        float zPos = ledge.position.z - ledge.localScale.z / 2;
-        if (ledge.rotation.y != 0)
-        {
-            xPos = ledge.position.x + ledge.localScale.z / 2;
-            zPos = transform.position.z;
-        }
-        Vector3 hangPos = new(xPos, ledge.position.y - 1.5f, zPos);
-        StartCoroutine(IEHang(hangPos));
-
-        Vector3 directionToLedge = (ledge.position - transform.position).normalized;
-        // directionToLedge.y = 0;
-        // Quaternion targetRotation = Quaternion.LookRotation(directionToLedge, Vector3.up);
-        float angle = Mathf.Atan2(directionToLedge.x, directionToLedge.z) * Mathf.Rad2Deg;
-        Quaternion targetRotation = Quaternion.Euler(0, angle, 0);
-        transform.rotation = targetRotation;
-
+        PositionPlayer(ledge);
+        RotatePlayer(ledge);
         isHanged = true;
         isClimbAllow = false;
-
+        isChangeAllow = false;
         player.animator.Play("Climb");
+        Invoke(nameof(AllowChange), 1f);
     }
 
     private void ClimbMovement()
@@ -135,21 +152,40 @@ public class Climbing : MonoBehaviour
                 origin += new Vector3(player.playerMovement.moveInput.normalized.x * 0.5f, 1.5f, 0);
             }
 
-            if (Physics.Raycast(origin, transform.forward, out RaycastHit hit, 0.5f, layerMask))
+            Collider[] hitColliders1 = Physics.OverlapSphere(origin, 0.2f, layerMask);
+            foreach (var item in hitColliders1)
             {
-                player.rigidBody.MovePosition(movePos);
-            }
-
-
-            if (Physics.SphereCast(origin, 10, transform.right, out RaycastHit otherPoint, 20, layerMask))
-            {
-                Debug.Log("Detect");
-                if (otherPoint.transform != climbPoint)
+                if (item.transform == climbPoint)
                 {
-                    Debug.Log("New Point Detected");
+                    player.rigidBody.MovePosition(movePos);
+                    break;
                 }
             }
 
+            if (!Physics.Raycast(origin, climbPoint.forward, 2f, layerMask))
+            {
+                if (isChangeAllow)
+                {
+                    Collider[] hitColliders = Physics.OverlapSphere(origin, 0.2f, layerMask);
+
+                    foreach (var otherPoint in hitColliders)
+                    {
+                        if (otherPoint.transform != climbPoint)
+                        {
+                            // isChangeAllow = false;
+                            // climbPoint = otherPoint.transform;
+                            // PositionPlayer(climbPoint);
+                            // RotatePlayer(climbPoint);
+                            // isClimbAllow = false;
+                            // Invoke(nameof(AllowChange), 4f);
+
+                            Climb(otherPoint.transform);
+
+                            return;
+                        }
+                    }
+                }
+            }
         }
         else if (player.playerMovement.moveInput.y < 0) Fall(false);
         else if (player.playerMovement.moveInput.y > 0 || Input.GetButtonDown("Jump")) Fall(true);
