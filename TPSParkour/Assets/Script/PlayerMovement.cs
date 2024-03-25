@@ -46,14 +46,14 @@ public class PlayerMovement : MonoBehaviour
 
     private void UpdatePos()
     {
-        if (Mathf.Abs(moveInput.magnitude) > 0.1f && isGrounded)
+        if (Mathf.Abs(moveInput.magnitude) > 0.1f)
         {
             UpdateSpeed();
             Rotate();
             Move();
         }
     }
-   
+
     private void Move()
     {
         float targetAngle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y;
@@ -74,7 +74,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void UpdateSpeed()
     {
-        currSpeed = Input.GetKey(KeyCode.LeftShift) ? forwardSpeed : otherSpeed;
+        currSpeed = Input.GetKey(KeyCode.LeftShift) && isGrounded ? forwardSpeed : otherSpeed;
     }
 
     private void Anim()
