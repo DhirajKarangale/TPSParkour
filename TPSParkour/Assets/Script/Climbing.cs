@@ -7,6 +7,7 @@ public class Climbing : MonoBehaviour
 {
     [SerializeField] Player player;
     [SerializeField] float duration;
+    bool isTransitioning;
 
     [Header("Climbing")]
     [SerializeField] bool isTargetMatching;
@@ -31,13 +32,12 @@ public class Climbing : MonoBehaviour
     {
         if (!player.isHanging)
         {
-            if (Input.GetButtonDown("Jump") && !player.isAction)
+            if (Input.GetButtonDown("Jump"))
             {
                 if (Check(out RaycastHit hit))
                 {
                     Debug.Log("Climb Point found");
                     player.BlockMovement(true);
-                    // StartCoroutine(ClimbToLedge("IdleToHang", hit.transform, 0.40f, 53f));
                     ClimbToLedge(hit.transform);
                 }
             }
@@ -46,6 +46,33 @@ public class Climbing : MonoBehaviour
         {
             // Debug.Log("Ledge to ledge");
         }
+    }
+
+    IEnumerator TransitionToHang(Vector3 climbPoint)
+    {
+        isTransitioning = true;
+        Vector3 startPosition = transform.position;
+        Vector3 endPosition = climbPoint;
+        float journeyLength = Vector3.Distance(startPosition, endPosition);
+
+        // Play the Jump to Climb animation
+        player.animator.Play("IdleToHang");
+
+        float startTime = Time.time;
+        float distanceCovered = 0f;
+
+        while (distanceCovered < journeyLength)
+        {
+            float fracJourney = distanceCovered / journeyLength;
+            transform.position = Vector3.Lerp(startPosition, endPosition, fracJourney);
+            distanceCovered = (Time.time - startTime) * duration;
+            yield return null;
+        }
+
+        // Play the ClimbIdle animation
+        player.animator.Play("HangIdle");
+        player.isHanging = true;
+        isTransitioning = false;
     }
 
     private IEnumerator IEMove(Vector3 pos)
@@ -65,75 +92,18 @@ public class Climbing : MonoBehaviour
 
     private void ClimbToLedge(Transform ledgePoint)
     {
-        // DataTarget dataTarget = new DataTarget()
-        // {
-        //     position = ledgePoint.position,
-        //     bodyParts = AvatarTarget.RightHand,
-        //     positionWt = Vector3.one,
-        //     stTime = stTime,
-        //     enTime = enTime
-        // };
-
-        // Quaternion rotation = Quaternion.LookRotation(-ledgePoint.forward);
-
-        // yield return player.PerformAction(dataTarget, anim, rotation, 0, true);
-
-        // float angle = Mathf.Atan2(ledgePoint.position.x, ledgePoint.position.z) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y;
-        // transform.position = ledgePoint.position - new Vector3(0, 1.5f, ledgePoint.localScale.z / 2);
-
+        // Vector3 hangPos = ledgePoint.position - new Vector3(0, 1.5f, ledgePoint.localScale.z / 2);
+        Vector3 hangPos = new(transform.position.x, ledgePoint.position.y - 1.5f, transform.position.z - ledgePoint.localScale.z / 2);
+        StartCoroutine(TransitionToHang(hangPos));
         float angle = Mathf.Atan2(ledgePoint.position.x, ledgePoint.position.z) * Mathf.Rad2Deg;
-        StartCoroutine(IEMove(ledgePoint.position - new Vector3(0, 1.5f, ledgePoint.localScale.z / 2)));
         transform.rotation = Quaternion.Euler(0, angle, 0);
-        player.animator.Play("IdleToHang");
+        // player.animator.Play("IdleToHang");
 
         player.isHanging = true;
     }
 
-    private IEnumerator Perform()
-    {
-        player.BlockMovement(false);
-
-        DataTarget dataTarget = null;
-
-        if (isTargetMatching)
-        {
-            dataTarget = new DataTarget()
-            {
-                position = position,
-                bodyParts = bodyParts,
-                positionWt = position,
-                stTime = stTime,
-                enTime = enTime
-            };
-        }
-
-        yield return player.PerformAction(dataTarget, anim, rotation, delay, isLookAt);
-
-
-        player.BlockMovement(true);
-    }
-
-
     private bool Check(out RaycastHit hit)
     {
-        // hit = new RaycastHit();
-
-        // Vector3 climbOrigin = transform.position + Vector3.up * 2f;
-        // Vector3 offset = new Vector3(0, 0f, 0);
-        // // Vector3 offset = new Vector3(0, 0.19f, 0);
-
-        // for (int i = 0; i < raysCnt; i++)
-        // {
-        //     Debug.DrawRay(climbOrigin + offset * i, transform.forward, Color.red);
-        //     if (Physics.Raycast(climbOrigin + offset * i, transform.forward, out RaycastHit raycast, rayLen, layerMask))
-        //     {
-        //         hit = raycast;
-        //         return true;
-        //     }
-        // }
-
-        // return false;
-
         hit = new RaycastHit();
         return Physics.SphereCast(transform.position, rayLen, Vector3.up, out hit, layerMask);
     }
