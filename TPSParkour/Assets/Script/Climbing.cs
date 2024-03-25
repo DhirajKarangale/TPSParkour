@@ -14,7 +14,7 @@ public class Climbing : MonoBehaviour
 
     private bool isHanged;
     private bool isClimbAllow;
-    private BoxCollider colliderClimb;
+    private Transform climbPoint;
 
     private void Start()
     {
@@ -72,7 +72,7 @@ public class Climbing : MonoBehaviour
         isHanged = false;
         player.BlockMovement(false);
         player.animator.Play("Movement");
-        colliderClimb = null;
+        climbPoint = null;
 
         if (isJump) player.rigidBody.AddForce(Vector3.up * force, ForceMode.Impulse);
 
@@ -84,21 +84,32 @@ public class Climbing : MonoBehaviour
     {
         if (isClimbAllow && player.playerMovement.isJumping)
         {
-            if (Physics.SphereCast(transform.position + new Vector3(0, 1.5f, 0), radius, transform.forward, out RaycastHit hit, 5, layerMask)) Climb(hit.transform);
+            // if (Physics.SphereCast(transform.position + new Vector3(0, 1.5f, 0), radius, transform.forward, out RaycastHit hit, 2f, layerMask)) Climb(hit.transform);
+            if (Physics.Raycast(transform.position + new Vector3(0, 1.5f, 0), transform.forward, out RaycastHit hit, 2f, layerMask)) Climb(hit.transform);
         }
     }
 
-    private void Climb(Transform ledgePoint)
+    private void Climb(Transform ledge)
     {
-        colliderClimb = ledgePoint.GetComponent<BoxCollider>();
-
+        climbPoint = ledge;
         player.BlockMovement(true);
 
-        Vector3 hangPos = new(transform.position.x, ledgePoint.position.y - 1.5f, ledgePoint.position.z - ledgePoint.localScale.z / 2);
+        float xPos = transform.position.x;
+        float zPos = ledge.position.z - ledge.localScale.z / 2;
+        if (ledge.rotation.y != 0)
+        {
+            xPos = ledge.position.x + ledge.localScale.z / 2;
+            zPos = transform.position.z;
+        }
+        Vector3 hangPos = new(xPos, ledge.position.y - 1.5f, zPos);
         StartCoroutine(IEHang(hangPos));
 
-        float angle = Mathf.Atan2(ledgePoint.position.x, ledgePoint.position.z) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0, angle, 0);
+        Vector3 directionToLedge = (ledge.position - transform.position).normalized;
+        directionToLedge.y = 0;
+        float angle = Mathf.Atan2(directionToLedge.x, directionToLedge.z) * Mathf.Rad2Deg;
+        Quaternion targetRotation = Quaternion.LookRotation(directionToLedge, Vector3.up);
+        // Quaternion targetRotation = Quaternion.Euler(0, angle, 0);
+        transform.rotation = targetRotation;
 
         isHanged = true;
         isClimbAllow = false;
@@ -110,10 +121,24 @@ public class Climbing : MonoBehaviour
     {
         if (player.playerMovement.moveInput.x != 0)
         {
-            Vector3 origin = transform.position + new Vector3(player.playerMovement.moveInput.normalized.x * 0.5f, 1.4f, 0);
-            if (Physics.Raycast(origin, transform.forward, out RaycastHit hit, 3, layerMask))
+            Vector3 origin = transform.position;
+            Vector3 movePos = transform.position;
+
+            if (climbPoint.rotation.y != 0)
             {
-                Vector3 movePos = transform.position + new Vector3(player.playerMovement.moveInput.normalized.x * speedMove, 0, 0);
+                movePos += new Vector3(0, 0, player.playerMovement.moveInput.normalized.x * speedMove);
+                origin += new Vector3(0, 1.5f, player.playerMovement.moveInput.normalized.x * 0.5f);
+            }
+            else
+            {
+                movePos += new Vector3(player.playerMovement.moveInput.normalized.x * speedMove, 0, 0);
+                origin += new Vector3(player.playerMovement.moveInput.normalized.x * 0.5f, 1.5f, 0);
+            }
+
+            Debug.DrawRay(origin, transform.forward, Color.red);
+            // if (Physics.SphereCast(origin, 1, transform.forward, out RaycastHit hit, 3, layerMask))
+            if (Physics.Raycast(origin, transform.forward, out RaycastHit hit, 0.5f, layerMask))
+            {
                 player.rigidBody.MovePosition(movePos);
             }
         }
