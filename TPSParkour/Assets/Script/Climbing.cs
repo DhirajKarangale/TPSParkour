@@ -7,14 +7,14 @@ public class Climbing : MonoBehaviour
 {
     [SerializeField] Player player;
     [SerializeField] LayerMask layerMask;
-    [SerializeField] float speedClimb;
-    [SerializeField] float speedMove;
+    [SerializeField] float force;
     [SerializeField] float radius;
-    public float force;
+    [SerializeField] float speedMove;
+    [SerializeField] float speedClimb;
 
-    internal bool isHanged;
-    internal bool isClimbAllow;
-
+    private bool isHanged;
+    private bool isClimbAllow;
+    private BoxCollider colliderClimb;
 
     private void Start()
     {
@@ -26,6 +26,8 @@ public class Climbing : MonoBehaviour
     {
         if (!isHanged) Check();
         else ClimbMovement();
+
+        Anim();
     }
 
 
@@ -35,7 +37,7 @@ public class Climbing : MonoBehaviour
         Vector3 endPosition = climbPoint;
         float journeyLength = Vector3.Distance(startPosition, endPosition);
 
-        player.animator.Play("IdleToHang");
+        // player.animator.Play("IdleToHang");
 
         float startTime = Time.time;
         float distanceCovered = 0f;
@@ -48,9 +50,17 @@ public class Climbing : MonoBehaviour
             yield return null;
         }
 
-        player.animator.Play("HangIdle");
+        // player.animator.Play("HangIdle");
     }
 
+
+    private void Anim()
+    {
+        if (!isHanged) return;
+
+        player.animator.SetFloat("climbVertical", player.playerMovement.moveInput.y);
+        player.animator.SetFloat("climbHorrizontal", player.playerMovement.moveInput.x);
+    }
 
     private void AllowClimb()
     {
@@ -62,6 +72,7 @@ public class Climbing : MonoBehaviour
         isHanged = false;
         player.BlockMovement(false);
         player.animator.Play("Movement");
+        colliderClimb = null;
 
         if (isJump) player.rigidBody.AddForce(Vector3.up * force, ForceMode.Impulse);
 
@@ -73,74 +84,40 @@ public class Climbing : MonoBehaviour
     {
         if (isClimbAllow && player.playerMovement.isJumping)
         {
-            if (Physics.SphereCast(transform.position + new Vector3(0, 1.5f, 0), radius, transform.forward, out RaycastHit hit, 3, layerMask))
-            {
-                player.BlockMovement(true);
-                Climb(hit.transform);
-            }
+            if (Physics.SphereCast(transform.position + new Vector3(0, 1.5f, 0), radius, transform.forward, out RaycastHit hit, 5, layerMask)) Climb(hit.transform);
         }
     }
 
     private void Climb(Transform ledgePoint)
     {
+        colliderClimb = ledgePoint.GetComponent<BoxCollider>();
+
+        player.BlockMovement(true);
+
         Vector3 hangPos = new(transform.position.x, ledgePoint.position.y - 1.5f, ledgePoint.position.z - ledgePoint.localScale.z / 2);
         StartCoroutine(IEHang(hangPos));
+
         float angle = Mathf.Atan2(ledgePoint.position.x, ledgePoint.position.z) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, angle, 0);
 
         isHanged = true;
         isClimbAllow = false;
+
+        player.animator.Play("Climb");
     }
 
     private void ClimbMovement()
     {
         if (player.playerMovement.moveInput.x != 0)
         {
-            player.rigidBody.MovePosition(transform.position + new Vector3(player.playerMovement.moveInput.normalized.x * speedMove, 0, 0));
+            Vector3 origin = transform.position + new Vector3(player.playerMovement.moveInput.normalized.x * 0.5f, 1.4f, 0);
+            if (Physics.Raycast(origin, transform.forward, out RaycastHit hit, 3, layerMask))
+            {
+                Vector3 movePos = transform.position + new Vector3(player.playerMovement.moveInput.normalized.x * speedMove, 0, 0);
+                player.rigidBody.MovePosition(movePos);
+            }
         }
-        else if (player.playerMovement.moveInput.y < 0)
-        {
-            Fall(false);
-        }
-        else if (player.playerMovement.moveInput.y > 0 || Input.GetButtonDown("Jump"))
-        {
-            Fall(true);
-        }
-    }
-
-    private void CheckPointOld()
-    {
-        // if (Physics.SphereCast(transform.position + new Vector3(0, 1.5f, 0), radius, transform.forward, out hit, 1, layerMask))
-        // {
-        //     // Visualize the SphereCast
-        //     Debug.DrawLine(transform.position + new Vector3(0, 1.5f, 0), hit.point, Color.green); // Draw a line from player to hit point
-        //     DrawCircle(transform.position + new Vector3(0, 1.5f, 0) + transform.forward * hit.distance, radius, Color.green); // Draw a circle at hit point
-
-        //     return true;
-        // }
-        // else
-        // {
-        //     // Visualize the SphereCast
-        //     Debug.DrawRay(transform.position + new Vector3(0, 1.5f, 0), transform.forward * 1, Color.red); // Draw a ray indicating max distance
-        //     DrawCircle(transform.position + new Vector3(0, 1.5f, 0) + transform.forward * 1, radius, Color.red); // Draw a circle at max distance
-
-        //     return false;
-        // }
-    }
-
-
-    void DrawCircle(Vector3 center, float radius, Color color)
-    {
-        int segments = 36;
-        float angleIncrement = 360f / segments;
-
-        Vector3 prevPoint = center + new Vector3(radius, 0, 0);
-        for (int i = 1; i <= segments; i++)
-        {
-            float angle = i * angleIncrement;
-            Vector3 nextPoint = center + Quaternion.Euler(0, angle, 0) * new Vector3(radius, 0, 0);
-            Debug.DrawLine(prevPoint, nextPoint, color);
-            prevPoint = nextPoint;
-        }
+        else if (player.playerMovement.moveInput.y < 0) Fall(false);
+        else if (player.playerMovement.moveInput.y > 0 || Input.GetButtonDown("Jump")) Fall(true);
     }
 }
