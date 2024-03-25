@@ -60,27 +60,26 @@ public class PlayerMovement : MonoBehaviour
 
     private void Move()
     {
-        Vector3 moveDir = new Vector3(0, Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y, 0);
+        // Vector3 desiredMove = transform.forward * moveInput.y + player.cam.transform.right * moveInput.x;
+        // desiredMove = Vector3.ProjectOnPlane(desiredMove, groundDir).normalized;
 
-        Vector3 desiredMove = transform.forward * moveInput.y + player.cam.transform.right * moveInput.x;
-        if (moveInput.y > 0) desiredMove = player.cam.transform.forward * moveInput.y;
+        // if (moveInput.y > 0) desiredMove = player.cam.transform.forward * moveInput.y;
+        // if (moveInput.y < 0) desiredMove.z = -desiredMove.z;
 
-        desiredMove = Vector3.ProjectOnPlane(desiredMove, groundDir).normalized;
-
-        desiredMove.x = desiredMove.x * currSpeed;
-        desiredMove.z = desiredMove.z * currSpeed;
-        desiredMove.y = desiredMove.y * currSpeed;
-        if (moveInput.y < 0) desiredMove.z = -desiredMove.z;
+        float targetAngle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y;
+        Vector3 desiredMove = Quaternion.Euler(0, targetAngle, 0) * Vector3.forward;
 
         if (player.rigidBody.velocity.sqrMagnitude < (currSpeed * currSpeed))
         {
-            player.rigidBody.AddForce(desiredMove * Time.deltaTime * slopeCurveModifier.Evaluate(Vector3.Angle(groundDir, Vector3.up)), ForceMode.Impulse);
+            player.rigidBody.AddForce(desiredMove.normalized * currSpeed * Time.deltaTime * slopeCurveModifier.Evaluate(Vector3.Angle(groundDir, Vector3.up)), ForceMode.Impulse);
         }
     }
 
     private void Rotate()
     {
-        Quaternion targetAngle = Quaternion.Euler(0, Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg, 0);
+        // Quaternion targetAngle = Quaternion.Euler(0, Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg, 0);
+        float angle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y;
+        Quaternion targetAngle = Quaternion.Euler(0, angle, 0);
         transform.localRotation = Quaternion.Slerp(transform.localRotation, targetAngle, 5 * Time.deltaTime);
     }
 

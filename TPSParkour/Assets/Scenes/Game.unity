@@ -5799,7 +5799,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8079559056467309991}
-  m_LocalRotation: {x: 0.07021471, y: -0.0653869, z: 0.011518131, w: 0.99531996}
+  m_LocalRotation: {x: 0.07021471, y: -0.065386906, z: 0.011518132, w: 0.99531996}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -5890,7 +5890,7 @@ MonoBehaviour:
   m_XAxis:
     Value: 0
     m_SpeedMode: 1
-    m_MaxSpeed: 0.5
+    m_MaxSpeed: 10
     m_AccelTime: 0.1
     m_DecelTime: 0.1
     m_InputAxisName: Mouse X
@@ -6162,7 +6162,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8079559057263564545}
-  m_LocalRotation: {x: 0.10632332, y: -0.06492535, z: 0.013885704, w: 0.9921126}
+  m_LocalRotation: {x: 0.10632332, y: -0.06492537, z: 0.013885709, w: 0.9921126}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -6980,16 +6980,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 8296172668165141078}
-  isTargetMatching: 0
-  position: {x: 0, y: 0, z: 0}
-  bodyParts: 0
-  positionWt: {x: 0, y: 0, z: 0}
-  stTime: 0
-  enTime: 0
-  anim: 
-  rotation: {x: 0, y: 0, z: 0, w: 0}
-  delay: 0
-  isLookAt: 0
+  isTargetMatching: 1
+  position: {x: 1, y: 3, z: 1}
+  bodyParts: 4
+  positionWt: {x: 1, y: 2, z: 0}
+  stTime: 0.5
+  enTime: 54
+  anim: HangIdle
+  rotation: {x: 0, y: 0.38268346, z: 0, w: 0.9238795}
+  delay: 1
+  isLookAt: 1
   rayLen: 1.6
   layerMask:
     serializedVersion: 2
