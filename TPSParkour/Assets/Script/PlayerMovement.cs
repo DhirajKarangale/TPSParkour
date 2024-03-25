@@ -9,17 +9,16 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float forwardSpeed;
     [SerializeField] float otherSpeed;
     [SerializeField] float jumpForce;
-    [SerializeField] internal float sensitivity;
+    [SerializeField] float sensitivity;
     [SerializeField] AnimationCurve slopeCurveModifier;
 
     private RaycastHit hit;
     private Animator animator;
     private Vector3 groundDir;
-    private Vector2 moveInput;
+    internal Vector2 moveInput;
 
     private float currSpeed;
-    private bool isJump, isPreviouslyGrounded;
-    private bool isJumping, isGrounded;
+    internal bool isJumping, isGrounded, isJump, isPreviouslyGrounded;
     internal bool isBlock;
 
 
@@ -31,10 +30,11 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        GetInput();
+
         if (isBlock) return;
 
         Anim();
-        GetInput();
         UpdatePos();
         LookRotation();
         GroundCheck();
@@ -53,7 +53,7 @@ public class PlayerMovement : MonoBehaviour
             Move();
         }
     }
-
+   
     private void Move()
     {
         float targetAngle = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg + player.cam.transform.eulerAngles.y;
@@ -86,6 +86,8 @@ public class PlayerMovement : MonoBehaviour
 
     #endregion
 
+
+    #region Look
 
     private void LookRotation()
     {
@@ -122,6 +124,7 @@ public class PlayerMovement : MonoBehaviour
         return q;
     }
 
+    #endregion
 
 
     #region Ground
@@ -181,7 +184,7 @@ public class PlayerMovement : MonoBehaviour
         moveInput.x = Input.GetAxisRaw("Horizontal");
         moveInput.y = Input.GetAxisRaw("Vertical");
 
-        if (Input.GetButtonDown("Jump") && !isJump && !player.isAction) isJump = true;
+        if (Input.GetButtonDown("Jump") && !isJump) isJump = true;
     }
 
     #endregion
